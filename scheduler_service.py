@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from time_utils import utc_now
 from publisher import Publisher
 from scheduled_content_model import ScheduledContentModel
 from scheduled_content_repository import ScheduledContentRepository
@@ -40,7 +40,7 @@ class SchedulerService:
             if success:
                 return self.repository.mark_published(
                     content.id,
-                    datetime.utcnow(),
+                    utc_now(),
                 )
 
             return self.repository.mark_failed(

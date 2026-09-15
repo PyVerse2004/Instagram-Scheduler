@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from time_utils import utc_now
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -66,6 +66,6 @@ class ScheduledContentModel(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )

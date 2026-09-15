@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-
+from time_utils import utc_now
 from database import Base, SessionLocal, engine
 from fake_publisher import FakePublisher
 from media import Media, MediaType
@@ -27,7 +27,7 @@ def main():
         scheduled_content = ScheduledContent(
             media=media,
             content_type=ContentType.POST,
-            publish_at=datetime(2026, 9, 15, 12, 0),
+            publish_at=utc_now(),
             caption="Scheduler test",
             hashtags=["python", "scheduler"],
         )
@@ -45,7 +45,7 @@ def main():
 
         print("After publishing:", updated_content.status)
 
-        updated_content = repository.mark_published(content.id,datetime.utcnow(),)
+        updated_content = repository.mark_published(content.id, utc_now(),)
 
         print("After published:", updated_content.status)
         print("Published at:", updated_content.published_at)

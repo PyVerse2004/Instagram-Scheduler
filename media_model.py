@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from time_utils import utc_now
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -39,6 +39,6 @@ class MediaModel(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )

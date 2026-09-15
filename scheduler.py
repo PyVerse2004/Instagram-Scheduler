@@ -1,4 +1,4 @@
-from datetime import datetime , timezone
+from time_utils import utc_now
 from media_model import MediaModel
 from apscheduler.schedulers.blocking import BlockingScheduler
 
@@ -18,7 +18,7 @@ def check_and_publish():
             publisher=publisher,
         )
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
 
         due_content = scheduler_service.get_due_content(now)
 
