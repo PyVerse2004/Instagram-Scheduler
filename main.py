@@ -1,16 +1,19 @@
 from pathlib import Path
 
+from database import Base, SessionLocal, engine
 from media import Media, MediaType
+from media_repository import MediaRepository
 
 
 class MediaScanner:
+
     IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
     VIDEO_EXTENSIONS = {".mp4", ".mov"}
 
     def __init__(self, folder: str | Path):
         self.folder = Path(folder)
 
-    def scan(self) -> list[Media]:
+    def scan(self):
         if not self.folder.exists():
             raise FileNotFoundError(
                 f"Media folder does not exist: {self.folder}"
@@ -31,6 +34,7 @@ class MediaScanner:
 
             if media_type is None:
                 continue
+
 
             media_files.append(
                 Media(
@@ -55,17 +59,22 @@ class MediaScanner:
 
 
 def main():
-    scanner = MediaScanner("media")
+    Base.metadata.create_all(engine)
 
+    scanner = MediaScanner("media")
     media_files = scanner.scan()
 
-    for media in media_files:
-        print(
-            f"{media.media_type.value.upper():5} | "
-            f"{media.filename:20} | "
-            f"{media.status.value:10} | "
-            f"{media.size} bytes"
-        )
+    with SessionLocal() as session:
+        repository = MediaRepository(session)
+
+        for media in media_files:
+            database_media = repository.add(media)
+
+            print(
+                f"{database_media.id:3} | "
+                f"{database_media.media_type:5} | "
+                f"{database_media.filename}"
+            )
 
 
 if __name__ == "__main__":
