@@ -42,3 +42,14 @@ class MediaRepository:
         statement = select(MediaModel)
 
         return list(self.session.scalars(statement).all())
+
+    def get_by_id(
+        self,
+        media_id: int,
+    ) -> MediaModel | None:
+    
+        statement = select(MediaModel).where(
+            MediaModel.id == media_id
+        )
+    
+        return self.session.scalar(statement)
