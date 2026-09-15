@@ -41,6 +41,20 @@ def main():
         print("Publish at:", content.publish_at)
         print("Status:", content.status)
 
+        updated_content = repository.mark_publishing(content.id)
+
+        print("After publishing:", updated_content.status)
+
+        updated_content = repository.mark_published(content.id,datetime.utcnow(),)
+
+        print("After published:", updated_content.status)
+        print("Published at:", updated_content.published_at)
+
+        try:
+            repository.mark_publishing(content.id)
+        except ValueError as exc:
+            print("Invalid transition:", exc)
+
 
 if __name__ == "__main__":
     main()

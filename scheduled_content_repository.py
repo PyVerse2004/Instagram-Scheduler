@@ -79,50 +79,67 @@ class ScheduledContentRepository:
         status: str,
     ) -> ScheduledContentModel | None:
 
-        scheduled_content = self.get_by_id(content_id)
+        content = self.get_by_id(content_id)
 
-        if scheduled_content is None:
+        if content is None:
             return None
 
-        scheduled_content.status = status
+        allowed_transitions = {
+            "scheduled": {"publishing"},
+            "publishing": {"published", "failed"},
+            "failed": {"scheduled"},
+            "published": set(),
+        }
+
+        current_status = content.status
+
+        if status not in allowed_transitions.get(current_status, set()):
+            raise ValueError(
+                f"Invalid status transition: "
+                f"{current_status} -> {status}"
+            )
+
+        content.status = status
 
         self.session.commit()
-        self.session.refresh(scheduled_content)
+        self.session.refresh(content)
 
-        return scheduled_content
+        return content
 
     def mark_publishing(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "publishing",
         )
-    
-    
+
+
     def mark_published(
         self,
         content_id: int,
         published_at: datetime,
     ) -> ScheduledContentModel | None:
-    
-        content = self.get_by_id(content_id)
-    
+
+        content = self.update_status(
+            content_id,
+            "published",
+        )
+
         if content is None:
             return None
-    
-        content.status = "published"
+
         content.published_at = published_at
         content.error_message = None
-    
+
         self.session.commit()
         self.session.refresh(content)
-    
+
         return content
-    
-    
+
+
     def mark_failed(
         self,
         content_id: int,
@@ -134,7 +151,13 @@ class ScheduledContentRepository:
         if content is None:
             return None
     
-        content.status = "failed"
+        # ابتدا publishing → failed
+        self.update_status(
+            content_id,
+            "failed",
+        )
+    
+        # update_status همان object را در session نگه می‌دارد
         content.retry_count += 1
         content.error_message = error_message
     
@@ -143,17 +166,17 @@ class ScheduledContentRepository:
     
         return content
     
-    
+
     def mark_scheduled(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "scheduled",
         )
-        
+
 
     def get_due_content(self,now: datetime,) -> list[ScheduledContentModel]:
         statement = (
