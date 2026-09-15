@@ -31,6 +31,12 @@ class ScheduledContentModel(Base):
         default="",
     )
 
+    hashtags: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="",
+    )
+
     publish_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
@@ -40,6 +46,22 @@ class ScheduledContentModel(Base):
         String(20),
         nullable=False,
         default="scheduled",
+    )
+
+    retry_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    error_message: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

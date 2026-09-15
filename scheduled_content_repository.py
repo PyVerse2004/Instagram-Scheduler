@@ -22,8 +22,12 @@ class ScheduledContentRepository:
             media_id=media_id,
             content_type=scheduled_content.content_type.value,
             caption=scheduled_content.caption,
+            hashtags=", ".join(scheduled_content.hashtags),
             publish_at=scheduled_content.publish_at,
             status=scheduled_content.status.value,
+            retry_count=scheduled_content.retry_count,
+            error_message=scheduled_content.error_message,
+            published_at=scheduled_content.published_at,
         )
 
         self.session.add(scheduled_content_model)
@@ -91,40 +95,40 @@ class ScheduledContentRepository:
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "publishing",
         )
-    
-    
+
+
     def mark_published(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "published",
         )
-    
-    
+
+
     def mark_failed(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "failed",
         )
-    
-    
+
+
     def mark_scheduled(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-    
+
         return self.update_status(
             content_id,
             "scheduled",

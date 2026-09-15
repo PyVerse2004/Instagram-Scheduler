@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
@@ -24,4 +24,8 @@ class ScheduledContent:
     content_type: ContentType
     publish_at: datetime
     caption: str = ""
+    hashtags: list[str] = field(default_factory=list)
     status: ScheduledContentStatus = ScheduledContentStatus.SCHEDULED
+    retry_count: int = 0
+    error_message: str | None = None
+    published_at: datetime | None = None

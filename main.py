@@ -1,38 +1,37 @@
-from database import Base, SessionLocal, engine
-from fake_publisher import FakePublisher
-from media_model import MediaModel
-from scheduled_content_model import ScheduledContentModel
-from scheduled_content_repository import ScheduledContentRepository
-from scheduler_service import SchedulerService
+from datetime import datetime
+from pathlib import Path
+
+from media import Media, MediaType
+from scheduled_content import (
+    ContentType,
+    ScheduledContent,
+)
 
 
 def main():
-    Base.metadata.create_all(engine)
+    media = Media(
+        filename="photo.jpg",
+        path=Path("media/photo.jpg"),
+        media_type=MediaType.IMAGE,
+    )
 
-    with SessionLocal() as session:
-        repository = ScheduledContentRepository(session)
-        publisher = FakePublisher()
+    content = ScheduledContent(
+        media=media,
+        content_type=ContentType.POST,
+        publish_at=datetime(2026, 9, 20, 18, 30),
+        caption="My first scheduled post",
+        hashtags=[
+            "python",
+            "instagram",
+            "automation",
+        ],
+    )
 
-        scheduler = SchedulerService(
-            repository=repository,
-            publisher=publisher,
-        )
-
-        content = repository.get_by_id(1)
-
-        if content is None:
-            print("Content not found.")
-            return
-
-        print("Before:", content.status)
-
-        content = scheduler.retry(content.id)
-
-        print("After retry:", content.status)
-
-        content = scheduler.publish_content(content.id)
-
-        print("After publish:", content.status)
+    print("Caption:", content.caption)
+    print("Hashtags:", content.hashtags)
+    print("Retry count:", content.retry_count)
+    print("Error:", content.error_message)
+    print("Published at:", content.published_at)
 
 
 if __name__ == "__main__":
