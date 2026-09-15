@@ -90,3 +90,68 @@ def create_scheduled_content(
     )
 
     return created_content
+
+@app.get(
+    "/scheduled-contents",
+    response_model=list[ScheduledContentResponse],
+)
+def get_scheduled_contents(
+    session: Session = Depends(get_db),
+):
+    repository = ScheduledContentRepository(session)
+
+    contents = repository.get_all()
+
+    return contents
+
+
+@app.get(
+    "/scheduled-contents/{content_id}",
+    response_model=ScheduledContentResponse,
+)
+def get_scheduled_content(
+    content_id: int,
+    session: Session = Depends(get_db),
+):
+    repository = ScheduledContentRepository(session)
+
+    content = repository.get_by_id(content_id)
+
+    if content is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Scheduled content not found.",
+        )
+
+    return content
+
+
+@app.post(
+    "/scheduled-contents/{content_id}/retry",
+    response_model=ScheduledContentResponse,
+)
+def retry_scheduled_content(
+    content_id: int,
+    session: Session = Depends(get_db),
+):
+    repository = ScheduledContentRepository(session)
+
+    content = repository.get_by_id(content_id)
+
+    if content is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Scheduled content not found.",
+        )
+
+    if content.status != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail="Only failed content can be retried.",
+        )
+
+    updated_content = repository.mark_scheduled(
+        content_id
+    )
+
+    return updated_content
