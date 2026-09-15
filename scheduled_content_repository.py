@@ -86,3 +86,19 @@ class ScheduledContentRepository:
         self.session.refresh(scheduled_content)
 
         return scheduled_content
+
+    def get_due_content(self,now: datetime,) -> list[ScheduledContentModel]:
+        statement = (
+            select(ScheduledContentModel)
+            .where(
+                ScheduledContentModel.status == "scheduled",
+                ScheduledContentModel.publish_at <= now,
+            )
+            .order_by(
+                ScheduledContentModel.publish_at
+            )
+        )
+
+        return list(
+            self.session.scalars(statement).all()
+        )
