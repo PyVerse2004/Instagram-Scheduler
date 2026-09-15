@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from media import Media, MediaType
+
 
 class MediaScanner:
     IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -8,10 +10,7 @@ class MediaScanner:
     def __init__(self, folder: str | Path):
         self.folder = Path(folder)
 
-    def scan(self) -> dict[str, list[Path]]:
-        images = []
-        videos = []
-
+    def scan(self) -> list[Media]:
         if not self.folder.exists():
             raise FileNotFoundError(
                 f"Media folder does not exist: {self.folder}"
@@ -22,36 +21,51 @@ class MediaScanner:
                 f"Path is not a directory: {self.folder}"
             )
 
-        for file in self.folder.iterdir():
+        media_files = []
+
+        for file in self.folder.rglob("*"):
             if not file.is_file():
                 continue
 
-            extension = file.suffix.lower()
+            media_type = self._detect_media_type(file)
 
-            if extension in self.IMAGE_EXTENSIONS:
-                images.append(file)
+            if media_type is None:
+                continue
 
-            elif extension in self.VIDEO_EXTENSIONS:
-                videos.append(file)
+            media_files.append(
+                Media(
+                    filename=file.name,
+                    path=file,
+                    media_type=media_type,
+                )
+            )
 
-        return {
-            "images": images,
-            "videos": videos,
-        }
+        return media_files
+
+    def _detect_media_type(self, file: Path) -> MediaType | None:
+        extension = file.suffix.lower()
+
+        if extension in self.IMAGE_EXTENSIONS:
+            return MediaType.IMAGE
+
+        if extension in self.VIDEO_EXTENSIONS:
+            return MediaType.VIDEO
+
+        return None
 
 
 def main():
     scanner = MediaScanner("media")
 
-    result = scanner.scan()
+    media_files = scanner.scan()
 
-    print("Images:")
-    for image in result["images"]:
-        print(f"  - {image}")
-
-    print("\nVideos:")
-    for video in result["videos"]:
-        print(f"  - {video}")
+    for media in media_files:
+        print(
+            f"{media.media_type.value.upper():5} | "
+            f"{media.filename:20} | "
+            f"{media.status.value:10} | "
+            f"{media.size} bytes"
+        )
 
 
 if __name__ == "__main__":
