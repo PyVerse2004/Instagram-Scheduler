@@ -1,31 +1,12 @@
-from datetime import datetime
-from pathlib import Path
-from media import Media, MediaType
-from scheduled_content import (
-    ContentType,
-    ScheduledContent,
-)
+from database import Base, engine
+from media_model import MediaModel
+from scheduled_content_model import ScheduledContentModel
 
 
 def main():
-    media = Media(
-        filename="photo.jpg",
-        path=Path("media/photo.jpg"),
-        media_type=MediaType.IMAGE,
-    )
+    Base.metadata.create_all(engine)
 
-    content = ScheduledContent(
-        media=media,
-        content_type=ContentType.POST,
-        publish_at=datetime(2026, 9, 20, 18, 30),
-        caption="My first scheduled post",
-    )
-
-    print("Filename:", content.media.filename)
-    print("Type:", content.content_type.value)
-    print("Publish at:", content.publish_at)
-    print("Caption:", content.caption)
-    print("Status:", content.status.value)
+    print("Database tables created successfully.")
 
 
 if __name__ == "__main__":
