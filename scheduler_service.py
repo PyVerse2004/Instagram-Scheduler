@@ -34,48 +34,38 @@ class SchedulerService:
 
         self.repository.mark_publishing(content.id)
 
-        success = self.publisher.publish(content)
+        try:
+            success = self.publisher.publish(content)
 
-        if success:
-            return self.repository.mark_published(
-                content.id
+            if success:
+                return self.repository.mark_published(
+                    content.id,
+                    datetime.utcnow(),
+                )
+
+            return self.repository.mark_failed(
+                content.id,
+                "Publisher returned unsuccessful result.",
             )
 
-        return self.repository.mark_failed(
-            content.id
-        )
-
-    def mark_publishing(
-        self,
-        content_id: int,
-    ) -> ScheduledContentModel | None:
-
-        return self.repository.mark_publishing(
-            content_id
-        )
-
-    def mark_published(
-        self,
-        content_id: int,
-    ) -> ScheduledContentModel | None:
-
-        return self.repository.mark_published(
-            content_id
-        )
-
-    def mark_failed(
-        self,
-        content_id: int,
-    ) -> ScheduledContentModel | None:
-
-        return self.repository.mark_failed(
-            content_id
-        )
+        except Exception as exc:
+            return self.repository.mark_failed(
+                content.id,
+                str(exc),
+            )
 
     def retry(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
+
+        content = self.repository.get_by_id(content_id)
+
+        if content is None:
+            return None
+
+        if content.status != "failed":
+            return None
 
         return self.repository.mark_scheduled(
             content_id

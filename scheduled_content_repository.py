@@ -95,45 +95,65 @@ class ScheduledContentRepository:
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-
+    
         return self.update_status(
             content_id,
             "publishing",
         )
-
-
+    
+    
     def mark_published(
         self,
         content_id: int,
+        published_at: datetime,
     ) -> ScheduledContentModel | None:
-
-        return self.update_status(
-            content_id,
-            "published",
-        )
-
-
+    
+        content = self.get_by_id(content_id)
+    
+        if content is None:
+            return None
+    
+        content.status = "published"
+        content.published_at = published_at
+        content.error_message = None
+    
+        self.session.commit()
+        self.session.refresh(content)
+    
+        return content
+    
+    
     def mark_failed(
         self,
         content_id: int,
+        error_message: str,
     ) -> ScheduledContentModel | None:
-
-        return self.update_status(
-            content_id,
-            "failed",
-        )
-
-
+    
+        content = self.get_by_id(content_id)
+    
+        if content is None:
+            return None
+    
+        content.status = "failed"
+        content.retry_count += 1
+        content.error_message = error_message
+    
+        self.session.commit()
+        self.session.refresh(content)
+    
+        return content
+    
+    
     def mark_scheduled(
         self,
         content_id: int,
     ) -> ScheduledContentModel | None:
-
+    
         return self.update_status(
             content_id,
             "scheduled",
         )
-    
+        
 
     def get_due_content(self,now: datetime,) -> list[ScheduledContentModel]:
         statement = (
