@@ -87,6 +87,50 @@ class ScheduledContentRepository:
 
         return scheduled_content
 
+    def mark_publishing(
+        self,
+        content_id: int,
+    ) -> ScheduledContentModel | None:
+    
+        return self.update_status(
+            content_id,
+            "publishing",
+        )
+    
+    
+    def mark_published(
+        self,
+        content_id: int,
+    ) -> ScheduledContentModel | None:
+    
+        return self.update_status(
+            content_id,
+            "published",
+        )
+    
+    
+    def mark_failed(
+        self,
+        content_id: int,
+    ) -> ScheduledContentModel | None:
+    
+        return self.update_status(
+            content_id,
+            "failed",
+        )
+    
+    
+    def mark_scheduled(
+        self,
+        content_id: int,
+    ) -> ScheduledContentModel | None:
+    
+        return self.update_status(
+            content_id,
+            "scheduled",
+        )
+    
+
     def get_due_content(self,now: datetime,) -> list[ScheduledContentModel]:
         statement = (
             select(ScheduledContentModel)

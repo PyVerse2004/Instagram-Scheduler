@@ -1,6 +1,7 @@
-from datetime import datetime
-
 from database import Base, SessionLocal, engine
+from fake_publisher import FakePublisher
+from media_model import MediaModel
+from scheduled_content_model import ScheduledContentModel
 from scheduled_content_repository import ScheduledContentRepository
 from scheduler_service import SchedulerService
 
@@ -8,24 +9,30 @@ from scheduler_service import SchedulerService
 def main():
     Base.metadata.create_all(engine)
 
-    now = datetime(2026, 9, 20, 19, 00)
-
     with SessionLocal() as session:
         repository = ScheduledContentRepository(session)
-        scheduler = SchedulerService(repository)
+        publisher = FakePublisher()
 
-        due_content = scheduler.get_due_content(now)
+        scheduler = SchedulerService(
+            repository=repository,
+            publisher=publisher,
+        )
 
-        print(f"Current time: {now}")
-        print(f"Due content count: {len(due_content)}")
+        content = repository.get_by_id(1)
 
-        for content in due_content:
-            print(
-                f"{content.id} | "
-                f"{content.content_type} | "
-                f"{content.publish_at} | "
-                f"{content.status}"
-            )
+        if content is None:
+            print("Content not found.")
+            return
+
+        print("Before:", content.status)
+
+        content = scheduler.retry(content.id)
+
+        print("After retry:", content.status)
+
+        content = scheduler.publish_content(content.id)
+
+        print("After publish:", content.status)
 
 
 if __name__ == "__main__":

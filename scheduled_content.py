@@ -13,6 +13,7 @@ class ContentType(Enum):
 
 class ScheduledContentStatus(Enum):
     SCHEDULED = "scheduled"
+    PUBLISHING = "publishing"
     PUBLISHED = "published"
     FAILED = "failed"
 
