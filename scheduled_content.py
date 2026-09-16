@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-
+from dataclasses import dataclass, field
 from media import Media
 
 
@@ -18,7 +18,11 @@ class ScheduledContentStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     
-
+    
+@dataclass
+class ContentMetadata:
+    caption: str = ""
+    hashtags: list[str] = field(default_factory=list)
 
 @dataclass
 class ScheduledContent:
@@ -31,3 +35,8 @@ class ScheduledContent:
     retry_count: int = 0
     error_message: str | None = None
     published_at: datetime | None = None
+    metadata: ContentMetadata = field(
+    default_factory=ContentMetadata
+)
+
+
