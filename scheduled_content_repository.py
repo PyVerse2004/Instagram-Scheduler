@@ -110,12 +110,22 @@ class ScheduledContentRepository:
     def mark_publishing(
         self,
         content_id: int,
+        publishing_started_at: datetime,
     ) -> ScheduledContentModel | None:
-
-        return self.update_status(
+        content = self.update_status(
             content_id,
             "publishing",
         )
+
+        if content is None:
+            return None
+
+        content.publishing_started_at = publishing_started_at
+
+        self.session.commit()
+        self.session.refresh(content)
+
+        return content
 
 
     def mark_published(
@@ -123,7 +133,6 @@ class ScheduledContentRepository:
         content_id: int,
         published_at: datetime,
     ) -> ScheduledContentModel | None:
-
         content = self.update_status(
             content_id,
             "published",
@@ -133,6 +142,7 @@ class ScheduledContentRepository:
             return None
 
         content.published_at = published_at
+        content.publishing_started_at = None
         content.error_message = None
 
         self.session.commit()
@@ -141,31 +151,31 @@ class ScheduledContentRepository:
         return content
 
 
+
     def mark_failed(
         self,
         content_id: int,
         error_message: str,
     ) -> ScheduledContentModel | None:
-    
         content = self.get_by_id(content_id)
-    
+
         if content is None:
             return None
-    
-        # ابتدا publishing → failed
+
         self.update_status(
             content_id,
             "failed",
         )
-    
-        # update_status همان object را در session نگه می‌دارد
+
         content.retry_count += 1
         content.error_message = error_message
-    
+        content.publishing_started_at = None
+
         self.session.commit()
         self.session.refresh(content)
-    
+
         return content
+    
     
 
     def mark_scheduled(
@@ -227,4 +237,82 @@ class ScheduledContentRepository:
         self.session.commit()
         self.session.refresh(content)
 
+        return content
+
+    def can_retry(
+        self,
+        content_id: int,
+        max_retries: int,
+    ) -> bool:
+        content = self.get_by_id(content_id)
+
+        if content is None:
+            return False
+
+        return (
+            content.status == "failed"
+            and content.retry_count < max_retries
+        )
+
+    def retry(
+        self,
+        content_id: int,
+        max_retries: int,
+    ) -> ScheduledContentModel | None:
+        content = self.get_by_id(content_id)
+
+        if content is None:
+            return None
+
+        if content.status != "failed":
+            return None
+
+        if content.retry_count >= max_retries:
+            return None
+
+        return self.mark_scheduled(content_id)
+
+    def get_stale_publishing(
+        self,
+        cutoff: datetime,
+    ) -> list[ScheduledContentModel]:
+        statement = (
+            select(ScheduledContentModel)
+            .where(
+                ScheduledContentModel.status == "publishing",
+                ScheduledContentModel.publishing_started_at.is_not(None),
+                ScheduledContentModel.publishing_started_at <= cutoff,
+            )
+            .order_by(
+                ScheduledContentModel.publishing_started_at
+            )
+        )
+
+        return list(
+            self.session.scalars(statement).all()
+        )
+
+
+    def recover_stale_publishing(
+        self,
+        content_id: int,
+        error_message: str,
+    ) -> ScheduledContentModel | None:
+        content = self.get_by_id(content_id)
+    
+        if content is None:
+            return None
+    
+        self.update_status(
+            content_id,
+            "failed",
+        )
+    
+        content.retry_count += 1
+        content.error_message = error_message
+        content.publishing_started_at = None
+    
+        self.session.commit()
+        self.session.refresh(content)
+    
         return content

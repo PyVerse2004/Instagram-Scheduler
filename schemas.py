@@ -36,3 +36,8 @@ class ScheduledContentUpdate(BaseModel):
     publish_at: datetime | None = None
     caption: str | None = None
     hashtags: list[str] | None = None
+
+class MediaScanResponse(BaseModel):
+    scanned: int
+    added: int
+    skipped: int

@@ -12,3 +12,7 @@ class MediaNotFoundError(Exception):
 
 class InvalidContentTypeError(Exception):
     pass
+
+
+class MediaFolderError(Exception):
+    pass

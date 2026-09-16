@@ -1,8 +1,14 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
-DATABASE_URL = "sqlite:///instagram_scheduler.db"
+BASE_DIR = Path(__file__).resolve().parent
+
+DATABASE_PATH = BASE_DIR / "instagram_scheduler.db"
+
+DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 
 class Base(DeclarativeBase):
@@ -11,9 +17,7 @@ class Base(DeclarativeBase):
 
 engine = create_engine(
     DATABASE_URL,
-    echo=False,
 )
-
 
 SessionLocal = sessionmaker(
     bind=engine,

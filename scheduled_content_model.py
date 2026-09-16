@@ -69,3 +69,13 @@ class ScheduledContentModel(Base):
         default=utc_now,
         nullable=False,
     )
+
+    publishing_started_at: Mapped[datetime | None] = mapped_column(
+    DateTime,
+    nullable=True,
+    )
+
+    publishing_started_at: Mapped[datetime | None] = mapped_column(
+    DateTime,
+    nullable=True,
+    )

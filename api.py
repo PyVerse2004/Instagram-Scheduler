@@ -27,6 +27,29 @@ from dependencies import (
     get_scheduled_content_service,
 )
 
+from fastapi import Depends, HTTPException
+
+from dependencies import (
+    get_media_repository,
+    get_media_service,
+)
+from exceptions import (
+    MediaFolderError,
+    MediaNotFoundError,
+)
+from media_service import MediaService
+from schemas import (
+    MediaResponse,
+    MediaScanResponse,
+)
+
+from database import Base, engine
+
+from media_model import MediaModel
+from scheduled_content_model import ScheduledContentModel
+
+Base.metadata.create_all(engine)
+
 
 app = FastAPI(
     title="Instagram Scheduler API",
@@ -198,3 +221,44 @@ def update_scheduled_content(
             status_code=400,
             detail=str(exc),
         )
+
+@app.post(
+    "/media/scan",
+    response_model=MediaScanResponse,
+)
+def scan_media(
+    service: MediaService = Depends(
+        get_media_service
+    ),
+):
+    try:
+        return service.scan()
+
+    except (
+        FileNotFoundError,
+        NotADirectoryError,
+    ) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+@app.get(
+    "/media/{media_id}",
+    response_model=MediaResponse,
+)
+def get_media(
+    media_id: int,
+    service: MediaService = Depends(
+        get_media_service
+    ),
+):
+    media = service.get_by_id(media_id)
+
+    if media is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Media not found.",
+        )
+
+    return media

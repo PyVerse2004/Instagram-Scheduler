@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from config import MAX_RETRIES
 from media_repository import MediaRepository
 from scheduled_content import ContentType, ScheduledContent
 from scheduled_content_model import ScheduledContentModel
@@ -89,20 +89,27 @@ class ScheduledContentService:
         self,
         content_id: int,
     ) -> ScheduledContentModel:
-
+    
         content = self.repository.get_by_id(content_id)
-
+    
         if content is None:
             raise ScheduledContentNotFoundError(
                 "Scheduled content not found."
             )
-
+    
         if content.status != "failed":
             raise InvalidScheduledContentOperationError(
                 "Only failed content can be retried."
             )
-
-        return self.repository.mark_scheduled(content_id)
+    
+        if content.retry_count >= MAX_RETRIES:
+            raise InvalidScheduledContentOperationError(
+                "Maximum retry limit reached."
+            )
+    
+        return self.repository.mark_scheduled(
+            content_id
+        )
 
     def cancel(
         self,

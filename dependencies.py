@@ -6,6 +6,9 @@ from media_repository import MediaRepository
 from scheduled_content_repository import ScheduledContentRepository
 from scheduled_content_service import ScheduledContentService
 
+from media_scanner import MediaScanner
+from media_service import MediaService
+
 
 def get_db():
     session = SessionLocal()
@@ -39,4 +42,15 @@ def get_scheduled_content_service(
     return ScheduledContentService(
         scheduled_content_repository=repository,
         media_repository=media_repository,
+    )
+
+
+def get_media_service(
+    repository: MediaRepository = Depends(
+        get_media_repository
+    ),
+) -> MediaService:
+    return MediaService(
+        repository=repository,
+        scanner=MediaScanner(),
     )
