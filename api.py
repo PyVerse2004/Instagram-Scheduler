@@ -20,6 +20,13 @@ from exceptions import (
     ScheduledContentNotFoundError,
 )
 
+from dependencies import (
+    get_db,
+    get_media_repository,
+    get_scheduled_content_repository,
+    get_scheduled_content_service,
+)
+
 
 app = FastAPI(
     title="Instagram Scheduler API",
@@ -48,13 +55,11 @@ def root():
     response_model=list[MediaResponse],
 )
 def get_media(
-    session: Session = Depends(get_db),
+    repository: MediaRepository = Depends(
+        get_media_repository
+    ),
 ):
-    repository = MediaRepository(session)
-
-    media = repository.get_all()
-
-    return media
+    return repository.get_all()
 
 @app.post(
     "/scheduled-contents",
@@ -62,16 +67,10 @@ def get_media(
 )
 def create_scheduled_content(
     data: ScheduledContentCreate,
-    session: Session = Depends(get_db),
+    service: ScheduledContentService = Depends(
+        get_scheduled_content_service
+    ),
 ):
-    media_repository = MediaRepository(session)
-    repository = ScheduledContentRepository(session)
-
-    service = ScheduledContentService(
-        scheduled_content_repository=repository,
-        media_repository=media_repository,
-    )
-
     try:
         return service.create(
             media_id=data.media_id,
@@ -96,13 +95,11 @@ def create_scheduled_content(
     response_model=list[ScheduledContentResponse],
 )
 def get_scheduled_contents(
-    session: Session = Depends(get_db),
+    repository: ScheduledContentRepository = Depends(
+        get_scheduled_content_repository
+    ),
 ):
-    repository = ScheduledContentRepository(session)
-
-    contents = repository.get_all()
-
-    return contents
+    return repository.get_all()
 
 
 @app.get(
@@ -132,16 +129,10 @@ def get_scheduled_content(
 )
 def retry_scheduled_content(
     content_id: int,
-    session: Session = Depends(get_db),
+    service: ScheduledContentService = Depends(
+        get_scheduled_content_service
+    ),
 ):
-    repository = ScheduledContentRepository(session)
-    media_repository = MediaRepository(session)
-
-    service = ScheduledContentService(
-        scheduled_content_repository=repository,
-        media_repository=media_repository,
-    )
-
     try:
         return service.retry(content_id)
     except ScheduledContentNotFoundError as exc:
@@ -162,16 +153,10 @@ def retry_scheduled_content(
 )
 def cancel_scheduled_content(
     content_id: int,
-    session: Session = Depends(get_db),
+    service: ScheduledContentService = Depends(
+        get_scheduled_content_service
+    ),
 ):
-    repository = ScheduledContentRepository(session)
-    media_repository = MediaRepository(session)
-
-    service = ScheduledContentService(
-        scheduled_content_repository=repository,
-        media_repository=media_repository,
-    )
-
     try:
         return service.cancel(content_id)
     except ScheduledContentNotFoundError as exc:
@@ -192,16 +177,10 @@ def cancel_scheduled_content(
 def update_scheduled_content(
     content_id: int,
     data: ScheduledContentUpdate,
-    session: Session = Depends(get_db),
+    service: ScheduledContentService = Depends(
+        get_scheduled_content_service
+    ),
 ):
-    repository = ScheduledContentRepository(session)
-    media_repository = MediaRepository(session)
-
-    service = ScheduledContentService(
-        scheduled_content_repository=repository,
-        media_repository=media_repository,
-    )
-
     try:
         return service.update(
             content_id=content_id,
