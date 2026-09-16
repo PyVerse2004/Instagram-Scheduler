@@ -30,3 +30,9 @@ class ScheduledContentResponse(BaseModel):
     retry_count: int
     error_message: str | None
     published_at: datetime | None
+    
+
+class ScheduledContentUpdate(BaseModel):
+    publish_at: datetime | None = None
+    caption: str | None = None
+    hashtags: list[str] | None = None

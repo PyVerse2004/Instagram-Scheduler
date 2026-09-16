@@ -16,6 +16,8 @@ class ScheduledContentStatus(Enum):
     PUBLISHING = "publishing"
     PUBLISHED = "published"
     FAILED = "failed"
+    CANCELLED = "cancelled"
+    
 
 
 @dataclass

@@ -10,6 +10,7 @@ from schemas import (
     MediaResponse,
     ScheduledContentCreate,
     ScheduledContentResponse,
+    ScheduledContentUpdate,
 )
 
 
@@ -152,6 +153,71 @@ def retry_scheduled_content(
 
     updated_content = repository.mark_scheduled(
         content_id
+    )
+
+    return updated_content
+
+
+@app.post(
+    "/scheduled-contents/{content_id}/cancel",
+    response_model=ScheduledContentResponse,
+)
+def cancel_scheduled_content(
+    content_id: int,
+    session: Session = Depends(get_db),
+):
+    repository = ScheduledContentRepository(session)
+
+    content = repository.get_by_id(content_id)
+
+    if content is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Scheduled content not found.",
+        )
+
+    if content.status != "scheduled":
+        raise HTTPException(
+            status_code=400,
+            detail="Only scheduled content can be cancelled.",
+        )
+
+    cancelled_content = repository.mark_cancelled(
+        content_id
+    )
+
+    return cancelled_content
+
+@app.patch(
+    "/scheduled-contents/{content_id}",
+    response_model=ScheduledContentResponse,
+)
+def update_scheduled_content(
+    content_id: int,
+    data: ScheduledContentUpdate,
+    session: Session = Depends(get_db),
+):
+    repository = ScheduledContentRepository(session)
+
+    content = repository.get_by_id(content_id)
+
+    if content is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Scheduled content not found.",
+        )
+
+    if content.status != "scheduled":
+        raise HTTPException(
+            status_code=400,
+            detail="Only scheduled content can be updated.",
+        )
+
+    updated_content = repository.update_content(
+        content_id=content_id,
+        publish_at=data.publish_at,
+        caption=data.caption,
+        hashtags=data.hashtags,
     )
 
     return updated_content

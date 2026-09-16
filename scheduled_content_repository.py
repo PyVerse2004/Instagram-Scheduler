@@ -85,10 +85,11 @@ class ScheduledContentRepository:
             return None
 
         allowed_transitions = {
-            "scheduled": {"publishing"},
+            "scheduled": {"publishing" , "cancelled"},
             "publishing": {"published", "failed"},
             "failed": {"scheduled"},
             "published": set(),
+            "cancelled": set(),
         }
 
         current_status = content.status
@@ -177,6 +178,12 @@ class ScheduledContentRepository:
             "scheduled",
         )
 
+    def mark_cancelled(
+        self,
+        content_id: int,
+    ) -> ScheduledContentModel | None:
+        return self.update_status(content_id, "cancelled")
+
 
     def get_due_content(self,now: datetime,) -> list[ScheduledContentModel]:
         statement = (
@@ -193,3 +200,31 @@ class ScheduledContentRepository:
         return list(
             self.session.scalars(statement).all()
         )
+
+
+    def update_content(
+        self,
+        content_id: int,
+        publish_at: datetime | None = None,
+        caption: str | None = None,
+        hashtags: list[str] | None = None,
+    ) -> ScheduledContentModel | None:
+
+        content = self.get_by_id(content_id)
+
+        if content is None:
+            return None
+
+        if publish_at is not None:
+            content.publish_at = publish_at
+
+        if caption is not None:
+            content.caption = caption
+
+        if hashtags is not None:
+            content.hashtags = ", ".join(hashtags)
+
+        self.session.commit()
+        self.session.refresh(content)
+
+        return content
