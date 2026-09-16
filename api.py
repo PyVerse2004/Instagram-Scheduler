@@ -12,6 +12,13 @@ from schemas import (
     ScheduledContentResponse,
     ScheduledContentUpdate,
 )
+from scheduled_content_service import ScheduledContentService
+from exceptions import (
+    InvalidContentTypeError,
+    InvalidScheduledContentOperationError,
+    MediaNotFoundError,
+    ScheduledContentNotFoundError,
+)
 
 
 app = FastAPI(
@@ -58,39 +65,31 @@ def create_scheduled_content(
     session: Session = Depends(get_db),
 ):
     media_repository = MediaRepository(session)
-
-    media = media_repository.get_by_id(data.media_id)
-
-    if media is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Media not found.",
-        )
-
-    try:
-        content_type = ContentType(data.content_type)
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid content_type.",
-        )
-
-    scheduled_content = ScheduledContent(
-        media=media,
-        content_type=content_type,
-        publish_at=data.publish_at,
-        caption=data.caption,
-        hashtags=data.hashtags,
-    )
-
     repository = ScheduledContentRepository(session)
 
-    created_content = repository.add(
-        scheduled_content,
-        media_id=media.id,
+    service = ScheduledContentService(
+        scheduled_content_repository=repository,
+        media_repository=media_repository,
     )
 
-    return created_content
+    try:
+        return service.create(
+            media_id=data.media_id,
+            content_type=data.content_type,
+            publish_at=data.publish_at,
+            caption=data.caption,
+            hashtags=data.hashtags,
+        )
+    except MediaNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
+    except InvalidContentTypeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
 
 @app.get(
     "/scheduled-contents",
@@ -136,26 +135,25 @@ def retry_scheduled_content(
     session: Session = Depends(get_db),
 ):
     repository = ScheduledContentRepository(session)
+    media_repository = MediaRepository(session)
 
-    content = repository.get_by_id(content_id)
-
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Scheduled content not found.",
-        )
-
-    if content.status != "failed":
-        raise HTTPException(
-            status_code=400,
-            detail="Only failed content can be retried.",
-        )
-
-    updated_content = repository.mark_scheduled(
-        content_id
+    service = ScheduledContentService(
+        scheduled_content_repository=repository,
+        media_repository=media_repository,
     )
 
-    return updated_content
+    try:
+        return service.retry(content_id)
+    except ScheduledContentNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
+    except InvalidScheduledContentOperationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
 
 
 @app.post(
@@ -167,26 +165,25 @@ def cancel_scheduled_content(
     session: Session = Depends(get_db),
 ):
     repository = ScheduledContentRepository(session)
+    media_repository = MediaRepository(session)
 
-    content = repository.get_by_id(content_id)
-
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Scheduled content not found.",
-        )
-
-    if content.status != "scheduled":
-        raise HTTPException(
-            status_code=400,
-            detail="Only scheduled content can be cancelled.",
-        )
-
-    cancelled_content = repository.mark_cancelled(
-        content_id
+    service = ScheduledContentService(
+        scheduled_content_repository=repository,
+        media_repository=media_repository,
     )
 
-    return cancelled_content
+    try:
+        return service.cancel(content_id)
+    except ScheduledContentNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
+    except InvalidScheduledContentOperationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
 
 @app.patch(
     "/scheduled-contents/{content_id}",
@@ -198,26 +195,27 @@ def update_scheduled_content(
     session: Session = Depends(get_db),
 ):
     repository = ScheduledContentRepository(session)
+    media_repository = MediaRepository(session)
 
-    content = repository.get_by_id(content_id)
-
-    if content is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Scheduled content not found.",
-        )
-
-    if content.status != "scheduled":
-        raise HTTPException(
-            status_code=400,
-            detail="Only scheduled content can be updated.",
-        )
-
-    updated_content = repository.update_content(
-        content_id=content_id,
-        publish_at=data.publish_at,
-        caption=data.caption,
-        hashtags=data.hashtags,
+    service = ScheduledContentService(
+        scheduled_content_repository=repository,
+        media_repository=media_repository,
     )
 
-    return updated_content
+    try:
+        return service.update(
+            content_id=content_id,
+            publish_at=data.publish_at,
+            caption=data.caption,
+            hashtags=data.hashtags,
+        )
+    except ScheduledContentNotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
+    except InvalidScheduledContentOperationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
