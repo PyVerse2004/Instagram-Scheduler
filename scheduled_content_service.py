@@ -4,7 +4,7 @@ from media_repository import MediaRepository
 from scheduled_content import ContentType, ScheduledContent
 from scheduled_content_model import ScheduledContentModel
 from scheduled_content_repository import ScheduledContentRepository
-
+from metadata_service import MetadataService
 from exceptions import (
     InvalidContentTypeError,
     InvalidScheduledContentOperationError,
@@ -18,9 +18,11 @@ class ScheduledContentService:
         self,
         scheduled_content_repository: ScheduledContentRepository,
         media_repository: MediaRepository,
+        metadata_service: MetadataService,
     ):
         self.repository = scheduled_content_repository
         self.media_repository = media_repository
+        self.metadata_service = metadata_service
 
     def create(
         self,
@@ -29,6 +31,7 @@ class ScheduledContentService:
         publish_at: datetime,
         caption: str = "",
         hashtags: list[str] | None = None,
+
     ) -> ScheduledContentModel:
 
         media = self.media_repository.get_by_id(media_id)
@@ -43,12 +46,18 @@ class ScheduledContentService:
                 "Invalid content_type."
             )
 
+        normalized_hashtags = (
+            self.metadata_service.normalize_hashtags(
+                hashtags or []
+            )
+)
+
         scheduled_content = ScheduledContent(
             media=media,
             content_type=content_type_enum,
             publish_at=publish_at,
             caption=caption,
-            hashtags=hashtags or [],
+            hashtags=normalized_hashtags,
         )
 
         return self.repository.add(
