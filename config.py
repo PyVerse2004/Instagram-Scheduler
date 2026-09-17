@@ -1,4 +1,7 @@
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 SCHEDULER_INTERVAL_SECONDS = int(
     os.getenv("SCHEDULER_INTERVAL_SECONDS", "10")
@@ -14,27 +17,16 @@ PUBLISHING_TIMEOUT_SECONDS = int(
 
 MEDIA_FOLDER = os.getenv(
     "MEDIA_FOLDER",
-    "media"
+    "media",
 )
 
-SUPPORTED_IMAGE_EXTENSIONS = {
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".webp",
-}
-
-SUPPORTED_VIDEO_EXTENSIONS = {
-    ".mp4",
-    ".mov",
-}
-
+# Instagram
 INSTAGRAM_ACCESS_TOKEN = os.getenv(
-    "IGAAWxVRFZASZAJBZAFltbER3TnFjUFVFRjR1dlRfaXZA6TkY1Y25BTml3d19QaEdZAQnlGUXJEaDhSdGUtOTFZAbnlvOXNxM010dUo2djd0dHlTTEZAQSzBDclo4M1VjbE9RMUFycnAxQVV6OWFyTzRfN3FhQ0NYakljMUpNQkpBQ1ZAVcwZDZD",
+    "INSTAGRAM_ACCESS_TOKEN",
     "",
 )
 
 INSTAGRAM_ACCOUNT_ID = os.getenv(
-    "mahonia.perfume21",
+    "INSTAGRAM_ACCOUNT_ID",
     "",
 )
